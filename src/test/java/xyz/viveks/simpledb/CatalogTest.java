@@ -16,7 +16,6 @@ import xyz.viveks.simpledb.TestUtil.SkeletonFile;
 import xyz.viveks.simpledb.systemtest.SimpleDbTestBase;
 import xyz.viveks.simpledb.systemtest.SystemTestUtil;
 
-@Ignore
 public class CatalogTest extends SimpleDbTestBase {
 	private static Random r = new Random();
     private static String name = SystemTestUtil.getUUID();
