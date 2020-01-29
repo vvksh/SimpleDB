@@ -42,7 +42,6 @@ public class TupleTest extends SimpleDbTestBase {
     /**
      * Unit test for Tuple.getRecordId() and Tuple.setRecordId()
      */
-    @Ignore
     @Test public void modifyRecordId() {
         Tuple tup1 = new Tuple(Utility.getTupleDesc(1));
         HeapPageId pid1 = new HeapPageId(0,0);

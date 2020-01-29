@@ -11,7 +11,6 @@ import org.junit.Test;
 
 import xyz.viveks.simpledb.systemtest.SimpleDbTestBase;
 
-@Ignore
 public class HeapPageIdTest extends SimpleDbTestBase {
 
     private HeapPageId pid;
