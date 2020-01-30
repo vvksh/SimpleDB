@@ -6,6 +6,7 @@ import java.util.Objects;
 public final class HeapPageId implements PageId {
 
   private int tableId;
+  // assume starts at 0
   private int pgNo;
 
   /**
