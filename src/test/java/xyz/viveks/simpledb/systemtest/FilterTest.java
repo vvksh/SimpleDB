@@ -6,7 +6,6 @@ import static org.junit.Assert.*;
 import org.junit.Ignore;
 import xyz.viveks.simpledb.*;
 
-@Ignore
 public class FilterTest extends FilterBase {
     @Override
     protected int applyPredicate(HeapFile table, TransactionId tid, Predicate predicate)

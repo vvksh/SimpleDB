@@ -8,7 +8,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
 import junit.framework.JUnit4TestAdapter;
 
-@Ignore
 public class JoinPredicateTest extends SimpleDbTestBase {
 
   /**

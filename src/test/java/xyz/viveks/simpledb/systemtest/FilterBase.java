@@ -12,7 +12,6 @@ import org.junit.Test;
 
 import xyz.viveks.simpledb.*;
 
-@Ignore
 public abstract class FilterBase extends SimpleDbTestBase {
     private static final int COLUMNS = 3;
     private static final int ROWS = 1097;

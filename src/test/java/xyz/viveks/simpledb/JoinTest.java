@@ -11,7 +11,6 @@ import org.junit.Test;
 
 import xyz.viveks.simpledb.systemtest.SimpleDbTestBase;
 
-@Ignore
 public class JoinTest extends SimpleDbTestBase {
 
   int width1 = 2;

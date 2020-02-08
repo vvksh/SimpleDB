@@ -18,7 +18,7 @@ public class Tuple implements Serializable {
 
   private TupleDesc tupleDesc;
   private RecordId recordId;
-  List<Field> fields;
+  private List<Field> fields;
 
   /**
    * Create a new tuple with the specified schema (type).

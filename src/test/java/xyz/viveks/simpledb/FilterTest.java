@@ -11,7 +11,6 @@ import org.junit.Test;
 
 import xyz.viveks.simpledb.systemtest.SimpleDbTestBase;
 
-@Ignore
 public class FilterTest extends SimpleDbTestBase {
 
   int testWidth = 3;
