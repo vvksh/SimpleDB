@@ -1,9 +1,29 @@
 # SimpleDB
 
+## [Overview](https://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-830-database-systems-fall-2010/assignments/MIT6_830F10_overview.pdf)
+
+### What is SimpleDB? 
+- **A basic database system** 
+- **What is has** 
+    – Heapfiles 
+    – Basic Operators (Scan, Filter, JOIN, Aggregate) 
+    – Buffer Pool 
+    – Transactions 
+    – SQL Front­end 
+
+
+- **Things it doesn’t have**
+    – Query optimizer 
+    – Fancy relational operators (UNION, etc) 
+    – Recovery – Indices
+
+
+![Fig: Module Diagram](https://paper-attachments.dropbox.com/s_532DC496C3353897D432233C2CB03E2C80C729AE483EB7F9EC058C0ED75B6542_1581317048762_Screen+Shot+2020-02-09+at+10.41.00+PM.png)
+
 This project is implementation of a simple relational DB. The skeleton files and instructions are provided by MIT as part of 
 **6.830: Database Systems** course. See [course page](https://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-830-database-systems-fall-2010).
 
-## About this repo
+## About the repo
 
 - This repo is using a `gradle` build system instead of ant build provided in the course assignment files. I made it this way while setting up
   my intellij. I also did some repackaging, to follow with java project conventions I am familiar to.
