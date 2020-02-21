@@ -1,7 +1,8 @@
-package xyz.viveks.simpledb;
+package xyz.viveks.simpledb.operators;
 
 import com.google.common.base.Preconditions;
 import java.util.NoSuchElementException;
+import xyz.viveks.simpledb.*;
 
 /** Filter is an operator that implements a relational select. */
 public class Filter extends Operator {

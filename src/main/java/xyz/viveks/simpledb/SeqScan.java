@@ -1,10 +1,9 @@
 package xyz.viveks.simpledb;
 
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 import java.util.NoSuchElementException;
 import lombok.NonNull;
+import xyz.viveks.simpledb.operators.OpIterator;
 
 /**
  * SeqScan is an implementation of a sequential scan access method that reads each tuple of a table

@@ -1,6 +1,10 @@
-package xyz.viveks.simpledb;
+package xyz.viveks.simpledb.operators;
 
 import java.util.NoSuchElementException;
+import xyz.viveks.simpledb.DbException;
+import xyz.viveks.simpledb.TransactionAbortedException;
+import xyz.viveks.simpledb.Tuple;
+import xyz.viveks.simpledb.TupleDesc;
 
 /**
  * Abstract class for implementing operators. It handles <code>close</code>, <code>next</code> and

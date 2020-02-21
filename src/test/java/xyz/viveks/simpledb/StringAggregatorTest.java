@@ -1,14 +1,16 @@
 package xyz.viveks.simpledb;
 
-import java.util.*;
+import static org.junit.Assert.assertEquals;
 
+import java.util.*;
+import junit.framework.JUnit4TestAdapter;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-
+import xyz.viveks.simpledb.operators.OpIterator;
+import xyz.viveks.simpledb.operators.aggregators.Aggregator;
+import xyz.viveks.simpledb.operators.aggregators.StringAggregator;
 import xyz.viveks.simpledb.systemtest.SimpleDbTestBase;
-import static org.junit.Assert.assertEquals;
-import junit.framework.JUnit4TestAdapter;
 
 @Ignore
 public class StringAggregatorTest extends SimpleDbTestBase {
@@ -17,33 +19,26 @@ public class StringAggregatorTest extends SimpleDbTestBase {
   OpIterator scan1;
   int[][] count = null;
 
-  /**
-   * Initialize each unit test
-   */
-  @Before public void createTupleList() throws Exception {
-    this.scan1 = TestUtil.createTupleList(width1,
-        new Object[] { 1, "a",
-                    1, "b",
-                    1, "c",
-                    3, "d",
-                    3, "e",
-                    3, "f",
-                    5, "g" });
+  /** Initialize each unit test */
+  @Before
+  public void createTupleList() throws Exception {
+    this.scan1 =
+        TestUtil.createTupleList(
+            width1, new Object[] {1, "a", 1, "b", 1, "c", 3, "d", 3, "e", 3, "f", 5, "g"});
 
     // verify how the results progress after a few merges
-    this.count = new int[][] {
-      { 1, 1 },
-      { 1, 2 },
-      { 1, 3 },
-      { 1, 3, 3, 1 }
-    };
-
+    this.count =
+        new int[][] {
+          {1, 1},
+          {1, 2},
+          {1, 3},
+          {1, 3, 3, 1}
+        };
   }
 
-  /**
-   * Test String.mergeTupleIntoGroup() and iterator() over a COUNT
-   */
-  @Test public void mergeCount() throws Exception {
+  /** Test String.mergeTupleIntoGroup() and iterator() over a COUNT */
+  @Test
+  public void mergeCount() throws Exception {
     scan1.open();
     StringAggregator agg = new StringAggregator(0, Type.INT_TYPE, 1, Aggregator.Op.COUNT);
 
@@ -55,16 +50,14 @@ public class StringAggregatorTest extends SimpleDbTestBase {
     }
   }
 
-  /**
-   * Test StringAggregator.iterator() for OpIterator behaviour
-   */
-  @Test public void testIterator() throws Exception {
+  /** Test StringAggregator.iterator() for OpIterator behaviour */
+  @Test
+  public void testIterator() throws Exception {
     // first, populate the aggregator via sum over scan1
     scan1.open();
     StringAggregator agg = new StringAggregator(0, Type.INT_TYPE, 1, Aggregator.Op.COUNT);
     try {
-      while (true)
-        agg.mergeTupleIntoGroup(scan1.next());
+      while (true) agg.mergeTupleIntoGroup(scan1.next());
     } catch (NoSuchElementException e) {
       // explicitly ignored
     }
@@ -107,11 +100,8 @@ public class StringAggregatorTest extends SimpleDbTestBase {
     }
   }
 
-  /**
-   * JUnit suite target
-   */
+  /** JUnit suite target */
   public static junit.framework.Test suite() {
     return new JUnit4TestAdapter(StringAggregatorTest.class);
   }
 }
-

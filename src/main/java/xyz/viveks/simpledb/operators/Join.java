@@ -1,7 +1,8 @@
-package xyz.viveks.simpledb;
+package xyz.viveks.simpledb.operators;
 
 import com.google.common.base.Preconditions;
 import java.util.*;
+import xyz.viveks.simpledb.*;
 
 /** The Join operator implements the relational join operation. */
 public class Join extends Operator {
