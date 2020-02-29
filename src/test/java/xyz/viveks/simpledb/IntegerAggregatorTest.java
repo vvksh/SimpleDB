@@ -12,7 +12,6 @@ import xyz.viveks.simpledb.operators.aggregators.Aggregator;
 import xyz.viveks.simpledb.operators.aggregators.IntegerAggregator;
 import xyz.viveks.simpledb.systemtest.SimpleDbTestBase;
 
-@Ignore
 public class IntegerAggregatorTest extends SimpleDbTestBase {
 
   int width1 = 2;

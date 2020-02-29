@@ -11,7 +11,6 @@ import xyz.viveks.simpledb.*;
 import xyz.viveks.simpledb.operators.aggregators.AggregateOperator;
 import xyz.viveks.simpledb.operators.aggregators.Aggregator;
 
-@Ignore
 public class AggregateOperatorTest extends SimpleDbTestBase {
   public void validateAggregate(
       DbFile table,
