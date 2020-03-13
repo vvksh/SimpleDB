@@ -8,7 +8,6 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 import junit.framework.JUnit4TestAdapter;
 
-@Ignore
 public class HeapFileWriteTest extends TestUtil.CreateHeapFile {
     private TransactionId tid;
 

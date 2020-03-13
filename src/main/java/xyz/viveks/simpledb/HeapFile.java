@@ -1,11 +1,13 @@
 package xyz.viveks.simpledb;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 /**
  * HeapFile is an implementation of a DbFile that stores a collection of tuples in no particular
@@ -19,6 +21,8 @@ import java.util.Iterator;
 public class HeapFile implements DbFile {
   private File file;
   private TupleDesc td;
+  private int numPages;
+  private int id;
 
   /**
    * Constructs a heap file backed by the specified file.
@@ -30,6 +34,8 @@ public class HeapFile implements DbFile {
     Preconditions.checkNotNull(td);
     this.file = f;
     this.td = td;
+    this.numPages = (int) (file.length() / BufferPool.getPageSize());
+    this.id = file.getAbsoluteFile().hashCode();
   }
 
   /**
@@ -50,7 +56,7 @@ public class HeapFile implements DbFile {
    * @return an ID uniquely identifying this HeapFile.
    */
   public int getId() {
-    return this.file.getAbsoluteFile().hashCode();
+    return this.id;
   }
 
   /**
@@ -64,22 +70,31 @@ public class HeapFile implements DbFile {
 
   // see DbFile.java for javadocs
   public Page readPage(PageId pid) {
-    HeapPageId heapPageId = (HeapPageId) pid;
-    int pgNo = heapPageId.getPageNumber();
     Preconditions.checkNotNull(pid, "PageId cannot be null");
     Preconditions.checkArgument(pid.getPageNumber() >= 0, "pageNo cannot be less than 0");
-    try {
-      RandomAccessFile raf = new RandomAccessFile(file, "r");
-      raf.seek(BufferPool.getPageSize() * pgNo);
-      byte[] pageBytes = new byte[BufferPool.getPageSize()];
-      for (int i = 0; i < BufferPool.getPageSize(); i++) {
-        pageBytes[i] = raf.readByte();
-      }
-      return new HeapPage(heapPageId, pageBytes);
-    } catch (IOException e) {
-      e.printStackTrace();
+    int pgNo = pid.getPageNumber();
+    if (pgNo > numPages) {
+      throw new NoSuchElementException("Invalid pageNo.");
     }
-    return null;
+
+    try {
+      if (pgNo == numPages()) { // create new page
+        this.numPages++;
+        return new HeapPage((HeapPageId) pid, HeapPage.createEmptyPageData());
+      } else { // read existing page from disk
+        int pageOffset = BufferPool.getPageSize() * pgNo;
+        RandomAccessFile raf = new RandomAccessFile(file, "r");
+        raf.seek(pageOffset);
+        byte[] pageBytes = new byte[BufferPool.getPageSize()];
+        for (int i = 0; i < BufferPool.getPageSize(); i++) {
+          pageBytes[i] = raf.readByte();
+        }
+        return new HeapPage((HeapPageId) pid, pageBytes);
+      }
+
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   // see DbFile.java for javadocs
@@ -89,24 +104,77 @@ public class HeapFile implements DbFile {
   }
 
   /** Returns the number of pages in this HeapFile. */
+  // if the file is empty, it will return 0
   public int numPages() {
-    return (int) (file.length() / BufferPool.getPageSize());
+    return numPages;
   }
 
   // see DbFile.java for javadocs
+
+  /**
+   * responsible for adding a tuple to a heap file. To add a new tuple to a HeapFile, you will have
+   * to find a page with an empty slot. If no such pages exist in the HeapFile, you need to create a
+   * new page and append it to the physical file on disk. You will need to ensure that the RecordID
+   * in the tuple is updated correctly.
+   *
+   * @param tid The transaction performing the update
+   * @param t The tuple to add. This tuple should be updated to reflect that it is now stored in
+   *     this file.
+   * @return
+   * @throws DbException
+   * @throws IOException
+   * @throws TransactionAbortedException
+   */
   public ArrayList<Page> insertTuple(TransactionId tid, Tuple t)
       throws DbException, IOException, TransactionAbortedException {
-    // some code goes here
-    return null;
-    // not necessary for lab1
+    ArrayList<Page> modifiedPages = new ArrayList<>();
+    HeapPage pageWithSpace = null;
+    for (int currentPageNo = 0; currentPageNo < numPages(); currentPageNo++) {
+      PageId currentPageId = new HeapPageId(this.getId(), currentPageNo);
+      HeapPage currentPage =
+          (HeapPage) Database.getBufferPool().getPage(tid, currentPageId, Permissions.READ_ONLY);
+      if (currentPage.getNumEmptySlots() > 0) {
+        pageWithSpace =
+            (HeapPage) Database.getBufferPool().getPage(tid, currentPageId, Permissions.READ_WRITE);
+      } else {
+        Database.getBufferPool().releasePage(tid, currentPageId);
+      }
+    }
+
+    if (pageWithSpace != null) {
+      pageWithSpace.insertTuple(t);
+      modifiedPages.add(pageWithSpace);
+    } else {
+      // create a new page
+      HeapPageId newPageId = new HeapPageId(this.getId(), numPages());
+      HeapPage newPage =
+          (HeapPage) Database.getBufferPool().getPage(tid, newPageId, Permissions.READ_WRITE);
+      newPage.insertTuple(t);
+      modifiedPages.add(newPage);
+    }
+    return modifiedPages;
   }
 
   // see DbFile.java for javadocs
+
+  /**
+   * deletes tuples. Tuples contain RecordIDs which allow you to find the page they reside on, so
+   * this should be as simple as locating the page a tuple belongs to and modifying the headers of
+   * the page appropriately.
+   *
+   * @param tid The transaction performing the update
+   * @param t The tuple to delete. This tuple should be updated to reflect that it is no longer
+   *     stored on any page.
+   * @return
+   * @throws DbException
+   * @throws TransactionAbortedException
+   */
   public ArrayList<Page> deleteTuple(TransactionId tid, Tuple t)
       throws DbException, TransactionAbortedException {
-    // some code goes here
-    return null;
-    // not necessary for lab1
+    PageId pid = t.getRecordId().getPageId();
+    HeapPage page = (HeapPage) Database.getBufferPool().getPage(tid, pid, Permissions.READ_ONLY);
+    page.deleteTuple(t);
+    return Lists.newArrayList(page);
   }
 
   // see DbFile.java for javadocs
