@@ -7,6 +7,8 @@ import java.util.*;
 import jline.ArgumentCompletor;
 import jline.ConsoleReader;
 import jline.SimpleCompletor;
+import xyz.viveks.simpledb.operators.Delete;
+import xyz.viveks.simpledb.operators.Insert;
 import xyz.viveks.simpledb.operators.OpIterator;
 import xyz.viveks.simpledb.operators.Operator;
 

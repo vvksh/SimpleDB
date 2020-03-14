@@ -90,7 +90,6 @@ public class Tuple implements Serializable {
 
   /** reset the TupleDesc of this tuple (only affecting the TupleDesc) */
   public void resetTupleDesc(TupleDesc td) {
-    // not sure whats happening here
-    // some code goes here
+    this.tupleDesc = td;
   }
 }

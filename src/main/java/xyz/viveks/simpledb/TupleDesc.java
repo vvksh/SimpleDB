@@ -185,7 +185,7 @@ public class TupleDesc implements Serializable {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
       TDItem tdItem = (TDItem) o;
-      return fieldType == tdItem.fieldType && Objects.equals(fieldName, tdItem.fieldName);
+      return fieldType == tdItem.fieldType;
     }
 
     @Override

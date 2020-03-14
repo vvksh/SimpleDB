@@ -7,13 +7,15 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import junit.framework.JUnit4TestAdapter;
+import org.junit.Before;
+import org.junit.Test;
+import xyz.viveks.simpledb.operators.Insert;
 import xyz.viveks.simpledb.operators.OpIterator;
 
 /**
  * We reserve more heavy-duty insertion testing for HeapFile and HeapPage. This suite is
  * superficial.
  */
-@Ignore
 public class InsertTest extends TestUtil.CreateHeapFile {
 
   private OpIterator scan1;

@@ -7,9 +7,9 @@ import java.util.ArrayList;
 
 import org.junit.Ignore;
 import xyz.viveks.simpledb.*;
+import xyz.viveks.simpledb.operators.Delete;
 import xyz.viveks.simpledb.operators.Filter;
 
-@Ignore
 public class DeleteTest extends FilterBase {
   ArrayList<ArrayList<Integer>> expectedTuples = null;
 
