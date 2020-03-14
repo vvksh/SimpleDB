@@ -99,8 +99,10 @@ public class HeapFile implements DbFile {
 
   // see DbFile.java for javadocs
   public void writePage(Page page) throws IOException {
-    // some code goes here
-    // not necessary for lab1
+    int pageOffset = BufferPool.getPageSize() * page.getId().getPageNumber();
+    RandomAccessFile raf = new RandomAccessFile(file, "rw");
+    raf.seek(pageOffset);
+    raf.write(page.getPageData());
   }
 
   /** Returns the number of pages in this HeapFile. */

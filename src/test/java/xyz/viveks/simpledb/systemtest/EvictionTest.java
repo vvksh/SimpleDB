@@ -17,8 +17,6 @@ import xyz.viveks.simpledb.operators.Insert;
  * than 2 MB due to the scan, the test fails. Otherwise, the page eviction policy seems to have
  * worked.
  */
-
-@Ignore
 public class EvictionTest extends SimpleDbTestBase {
   private static final long MEMORY_LIMIT_IN_MB = 5;
   private static final int BUFFER_PAGES = 16;

@@ -1,7 +1,7 @@
 package xyz.viveks.simpledb;
 
-import java.io.*;
-import java.util.HashMap;
+import java.io.IOException;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -35,7 +35,7 @@ public class BufferPool {
    */
   public BufferPool(int numPages) {
     this.numPages = numPages;
-    this.pages = new HashMap<>();
+    this.pages = new LinkedHashMap<>();
   }
 
   public static int getPageSize() {
@@ -72,8 +72,8 @@ public class BufferPool {
     // DB and store it in cache else
     // return from cache
     if (!pages.containsKey(pid)) {
-      if (pages.size() == numPages) {
-        throw new DbException("Bufferpool is full, Cannot request more pages");
+      if (pages.size() == numPages) { // if bufeerpool fool, revict a page
+        evictPage();
       }
       // get tableId for the page
       int tableId = pid.getTableId();
@@ -162,8 +162,7 @@ public class BufferPool {
 
   /**
    * Flush all dirty pages to disk. NB: Be careful using this routine -- it writes dirty data to
-   * disk so will break xyz.viveks.xyz.viveks.simpledb.xyz.viveks.simpledb if running in NO STEAL
-   * mode.
+   * disk so will break xyz.viveks.simpledb if running in NO STEAL mode.
    */
   public synchronized void flushAllPages() throws IOException {
     // some code goes here
@@ -189,8 +188,8 @@ public class BufferPool {
    * @param pid an ID indicating the page to flush
    */
   private synchronized void flushPage(PageId pid) throws IOException {
-    // some code goes here
-    // not necessary for lab1
+    DbFile dbFile = Database.getCatalog().getDatabaseFile(pid.getTableId());
+    dbFile.writePage(pages.get(pid));
   }
 
   /** Write all pages of the specified transaction to disk. */
@@ -202,9 +201,15 @@ public class BufferPool {
   /**
    * Discards a page from the buffer pool. Flushes the page to disk to ensure dirty pages are
    * updated on disk.
+   *
+   * <p>Eviction Policy: evict the oldest page inserted, uses LinkedHashMap to preserve insertion
+   * order
    */
   private synchronized void evictPage() throws DbException {
-    // some code goes here
-    // not necessary for lab1
+    if (pages.keySet().size() == 0) {
+      throw new DbException("No pages to evict");
+    }
+    PageId pageIdToBeEvicted = pages.keySet().iterator().next();
+    pages.remove(pageIdToBeEvicted);
   }
 }
