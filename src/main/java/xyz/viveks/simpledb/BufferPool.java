@@ -229,6 +229,20 @@ public class BufferPool {
       throw new DbException("No pages to evict");
     }
     PageId pageIdToBeEvicted = pages.keySet().iterator().next();
+    Page pageToBeEvicted = null;
+    for (PageId pageId : pages.keySet()) {
+      pageToBeEvicted = pages.get(pageId);
+      if (pageToBeEvicted.isDirty() != null) {
+        // if dirty, skip
+        continue;
+      }
+      pageIdToBeEvicted = pageId;
+      break;
+    }
+
+    if (pageIdToBeEvicted == null) {
+      throw new DbException("No pages to evict");
+    }
     pages.remove(pageIdToBeEvicted);
   }
 }
