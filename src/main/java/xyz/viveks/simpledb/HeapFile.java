@@ -133,12 +133,15 @@ public class HeapFile implements DbFile {
     HeapPage pageWithSpace = null;
     for (int currentPageNo = 0; currentPageNo < numPages(); currentPageNo++) {
       PageId currentPageId = new HeapPageId(this.getId(), currentPageNo);
+      System.out.printf("acquring read lock on page %s\n", currentPageId.toString());
       HeapPage currentPage =
           (HeapPage) Database.getBufferPool().getPage(tid, currentPageId, Permissions.READ_ONLY);
       if (currentPage.getNumEmptySlots() > 0) {
+        System.out.printf("acquring write lock on page %s\n", currentPageId.toString());
         pageWithSpace =
             (HeapPage) Database.getBufferPool().getPage(tid, currentPageId, Permissions.READ_WRITE);
       } else {
+        System.out.printf("released page %s\n", currentPageId.toString());
         Database.getBufferPool().releasePage(tid, currentPageId);
       }
     }

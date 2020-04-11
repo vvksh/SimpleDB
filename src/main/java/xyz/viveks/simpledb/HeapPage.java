@@ -325,6 +325,7 @@ public class HeapPage implements Page {
     BitSet bitset = BitSet.valueOf(header);
     bitset.set(i, value);
     header = bitset.toByteArray();
+    header = bitset.toByteArray();
   }
 
   /**

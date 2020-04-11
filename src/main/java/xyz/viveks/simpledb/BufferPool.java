@@ -28,6 +28,8 @@ public class BufferPool {
 
   Map<PageId, Page> pages;
 
+  LockManager lockManager;
+
   /**
    * Creates a BufferPool that caches up to numPages pages.
    *
@@ -36,6 +38,7 @@ public class BufferPool {
   public BufferPool(int numPages) {
     this.numPages = numPages;
     this.pages = new LinkedHashMap<>();
+    lockManager = new LockManager();
   }
 
   public static int getPageSize() {
@@ -67,12 +70,23 @@ public class BufferPool {
    */
   public Page getPage(TransactionId tid, PageId pid, Permissions perm)
       throws TransactionAbortedException, DbException {
-    // assume at least read permission
-    // not dealing with lock & transaction as well, just check cache, if not present, load it from
-    // DB and store it in cache else
-    // return from cache
+
+    boolean acquired = false;
+    try {
+      acquired = lockManager.acquireLock(tid, pid, perm);
+    } catch (InterruptedException e) {
+      throw new TransactionAbortedException();
+    }
+
+    if (!acquired) {
+      System.out.printf(
+          "Transaction id %s couldnt acquire lock on page: %s with permission %s",
+          tid.toString(), pid.toString(), perm.toString());
+      throw new TransactionAbortedException();
+    }
+
     if (!pages.containsKey(pid)) {
-      if (pages.size() == numPages) { // if bufeerpool fool, revict a page
+      if (pages.size() == numPages) { // if bufferpool full, evict a page
         evictPage();
       }
       // get tableId for the page
@@ -91,8 +105,11 @@ public class BufferPool {
    * @param pid the ID of the page to unlock
    */
   public void releasePage(TransactionId tid, PageId pid) {
-    // some code goes here
-    // not necessary for lab1|lab2
+    try {
+      lockManager.releaseLock(tid, pid);
+    } catch (DbException ex) {
+      throw new RuntimeException("releasing lock without acquiring");
+    }
   }
 
   /**
@@ -107,9 +124,7 @@ public class BufferPool {
 
   /** Return true if the specified transaction has a lock on the specified page */
   public boolean holdsLock(TransactionId tid, PageId p) {
-    // some code goes here
-    // not necessary for lab1|lab2
-    return false;
+    return lockManager.holdsLock(tid, p);
   }
 
   /**
@@ -167,7 +182,11 @@ public class BufferPool {
   public synchronized void flushAllPages() throws IOException {
     // some code goes here
     // not necessary for lab1
-
+    for (Map.Entry<PageId, Page> pageEntry : pages.entrySet()) {
+      if (pageEntry.getValue().isDirty() != null) {
+        flushPage(pageEntry.getKey());
+      }
+    }
   }
 
   /**
