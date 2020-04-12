@@ -7,7 +7,7 @@ public class LockManager {
   // Map to store state on which page Id have which locks
   private Map<PageId, SimpleDbLock> pageLocks;
 
-  private static final long TIMEOUT_MILLIS = 500;
+  private static final long TIMEOUT_MILLIS = 100;
 
   public LockManager() {
     pageLocks = new ConcurrentHashMap<>();

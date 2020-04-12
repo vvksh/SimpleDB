@@ -1,6 +1,5 @@
 package xyz.viveks.simpledb;
 
-import org.junit.Ignore;
 import xyz.viveks.simpledb.TestUtil.LockGrabber;
 
 import java.util.*;
@@ -10,7 +9,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import junit.framework.JUnit4TestAdapter;
 
-@Ignore
 public class DeadlockTest extends TestUtil.CreateHeapFile {
   private PageId p0, p1, p2;
   private TransactionId tid1, tid2;
