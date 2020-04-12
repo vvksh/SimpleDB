@@ -146,6 +146,42 @@ public class SimpleDbLock {
       if (readLock == 0 && writelock == 0) {
         locked = false;
       }
+
+      if (readLock < 0 || writelock < 0) {
+        throw new DbException("released more locks than acquired");
+      }
+
+      acquiredLocks.notify();
+    }
+  }
+
+  void releaseAllLocks(TransactionId tid) throws DbException {
+    synchronized (acquiredLocks) {
+      if (!acquiredLocks.containsKey(tid)) {
+        throw new DbException(
+                String.format("No locks acquired by transaction: %s", tid.toString()));
+      }
+      while (!acquiredLocks.get(tid).isEmpty()) {
+        LOCK releasedLock = acquiredLocks.get(tid).removeLast();
+        switch (releasedLock) {
+          case READ:
+            readLock--;
+            break;
+          case WRITE:
+            writelock--;
+            break;
+        }
+      }
+
+      if (readLock < 0 || writelock < 0) {
+        throw new DbException("released more locks than acquired");
+      }
+
+      if (readLock == 0 && writelock == 0) {
+        locked = false;
+      }
+
+      acquiredLocks.remove(tid);
       acquiredLocks.notify();
     }
   }

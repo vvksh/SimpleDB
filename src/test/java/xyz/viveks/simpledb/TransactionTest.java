@@ -7,7 +7,6 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import junit.framework.JUnit4TestAdapter;
 
-@Ignore
 public class TransactionTest extends TestUtil.CreateHeapFile {
   private PageId p0, p1, p2;
   private TransactionId tid1, tid2;

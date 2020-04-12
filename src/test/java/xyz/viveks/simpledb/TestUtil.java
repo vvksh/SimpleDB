@@ -318,7 +318,7 @@ public class TestUtil {
 
         try {
           Database.getBufferPool().transactionComplete(tid, false);
-        } catch (java.io.IOException e2) {
+        } catch (IOException | DbException e2) {
           e2.printStackTrace();
         }
       }

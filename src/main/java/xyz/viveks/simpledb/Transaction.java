@@ -54,7 +54,7 @@ public class Transaction {
 
             try {
                 Database.getBufferPool().transactionComplete(tid, !abort); // release locks
-            } catch (IOException e) {
+            } catch (IOException | DbException e) {
                 e.printStackTrace();
             }
 

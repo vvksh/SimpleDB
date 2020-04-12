@@ -38,4 +38,9 @@ public class LockManager {
   public void releaseLock(TransactionId tid, PageId pid) throws DbException {
     pageLocks.get(pid).releaseLock(tid);
   }
+
+  public void releaseAllLocks(TransactionId tid, PageId pid) throws DbException {
+    pageLocks.get(pid).releaseAllLocks(tid);
+
+  }
 }

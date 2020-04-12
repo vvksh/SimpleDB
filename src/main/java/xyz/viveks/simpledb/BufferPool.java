@@ -1,8 +1,8 @@
 package xyz.viveks.simpledb;
 
 import java.io.IOException;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * BufferPool manages the reading and writing of pages into memory from disk. Access methods call
@@ -30,6 +30,8 @@ public class BufferPool {
 
   LockManager lockManager;
 
+  private Map<TransactionId, Set<PageId>> transactionToPagesMap;
+
   /**
    * Creates a BufferPool that caches up to numPages pages.
    *
@@ -39,6 +41,7 @@ public class BufferPool {
     this.numPages = numPages;
     this.pages = new LinkedHashMap<>();
     lockManager = new LockManager();
+    transactionToPagesMap = new ConcurrentHashMap<>();
   }
 
   public static int getPageSize() {
@@ -85,6 +88,13 @@ public class BufferPool {
       throw new TransactionAbortedException();
     }
 
+    // lock was successfully acquired, add to transactionToPagesMap
+    if (!transactionToPagesMap.containsKey(tid)) {
+      transactionToPagesMap.put(tid, new HashSet<>());
+    }
+    transactionToPagesMap.get(tid).add(pid);
+
+
     if (!pages.containsKey(pid)) {
       if (pages.size() == numPages) { // if bufferpool full, evict a page
         evictPage();
@@ -117,9 +127,8 @@ public class BufferPool {
    *
    * @param tid the ID of the transaction requesting the unlock
    */
-  public void transactionComplete(TransactionId tid) throws IOException {
-    // some code goes here
-    // not necessary for lab1|lab2
+  public void transactionComplete(TransactionId tid) throws IOException, DbException {
+    transactionComplete(tid, true);
   }
 
   /** Return true if the specified transaction has a lock on the specified page */
@@ -133,9 +142,35 @@ public class BufferPool {
    * @param tid the ID of the transaction requesting the unlock
    * @param commit a flag indicating whether we should commit or abort
    */
-  public void transactionComplete(TransactionId tid, boolean commit) throws IOException {
-    // some code goes here
-    // not necessary for lab1|lab2
+  public void transactionComplete(TransactionId tid, boolean commit) throws IOException, DbException {
+    //flush all dirty pages associated with transaction to disk
+    if (!transactionToPagesMap.containsKey(tid)) {
+      // No pages acquired by transaction, return
+      return;
+    }
+    if (commit) {
+      for (PageId pageId: transactionToPagesMap.get(tid)) {
+        //1. If found in bufferpool and dirty, flush all dirty pages to disk, note that if not dirty, page could
+        // have been evicted
+        if (pages.containsKey(pageId) && pages.get(pageId).isDirty() != null) {
+          flushPage(pageId);
+        }
+        // 2. release all locks
+        lockManager.releaseAllLocks(tid, pageId);
+      }
+    } else {
+      for (PageId pageId: transactionToPagesMap.get(tid)) {
+        //1. If found in bufferpool and dirty, restore from disk, ote that if not dirty, page could
+        // have been evicted
+        if (pages.containsKey(pageId) && pages.get(pageId).isDirty() != null) {
+          Page pageFromDisk = Database.getCatalog().getDatabaseFile(pageId.getTableId()).readPage(pageId);
+          pages.put(pageId, pageFromDisk);
+        }
+        // 2. release all locks
+        lockManager.releaseAllLocks(tid, pageId);
+      }
+    }
+    transactionToPagesMap.remove(tid);
   }
 
   /**
@@ -154,7 +189,10 @@ public class BufferPool {
   public void insertTuple(TransactionId tid, int tableId, Tuple t)
       throws DbException, IOException, TransactionAbortedException {
     DbFile dbFile = Database.getCatalog().getDatabaseFile(tableId);
-    dbFile.insertTuple(tid, t);
+    ArrayList<Page> modifiedPages = dbFile.insertTuple(tid, t);
+    for (Page modifiedPage: modifiedPages) {
+      modifiedPage.markDirty(true, tid);
+    }
   }
 
   /**
@@ -172,7 +210,10 @@ public class BufferPool {
   public void deleteTuple(TransactionId tid, Tuple t)
       throws DbException, IOException, TransactionAbortedException {
     DbFile dbFile = Database.getCatalog().getDatabaseFile(t.getRecordId().getPageId().getTableId());
-    dbFile.deleteTuple(tid, t);
+    ArrayList<Page> modifiedPages = dbFile.deleteTuple(tid, t);
+    for (Page modifiedPage: modifiedPages) {
+      modifiedPage.markDirty(true, tid);
+    }
   }
 
   /**
@@ -197,8 +238,7 @@ public class BufferPool {
    * can be reused safely
    */
   public synchronized void discardPage(PageId pid) {
-    // some code goes here
-    // not necessary for lab1
+      pages.remove(pid);
   }
 
   /**

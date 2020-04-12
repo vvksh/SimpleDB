@@ -8,7 +8,6 @@ import xyz.viveks.simpledb.*;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
-@Ignore
 public class AbortEvictionTest extends SimpleDbTestBase {
     /** Aborts a transaction and ensures that its effects were actually undone.
      * This requires dirty pages to <em>not</em> get flushed to disk.
