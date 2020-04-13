@@ -28,7 +28,7 @@ This project is implementation of a simple relational DB. The skeleton files and
 - This repo is using a `gradle` build system instead of ant build provided in the course assignment files. I made it this way while setting up
   my intellij. I also did some repackaging, to follow with java project conventions I am familiar to.
 
-- I have also added `Uber/Nullaway` to check for potential bugs and added `goJF` java formatting tool (attached to git pre-commit hook)
+- ~~I have also added `Uber/Nullaway` to check for potential bugs and added `goJF` java formatting tool (attached to git pre-commit hook)~~ [Decided to remove]
 
 - There are 5 labs and each lab has bunch of exercises. For each lab, I have added a github project in this repo (lab1, lab2, lab3, lab4 and lab5) and each lab project has bunch of issues. Each issue corresponds to
   a exercise in the lab. Each issue is fixed by a commit (marking the issue done).
@@ -45,7 +45,7 @@ This project is implementation of a simple relational DB. The skeleton files and
 
 ## Progress
 - [X] lab 1: SimpleDB setup
-- [ ] lab 2: SimpleDB operators
-- [ ] lab 3: SimpleDB transactions 
+- [X] lab 2: SimpleDB operators
+- [X] lab 3: SimpleDB transactions 
 - [ ] lab 4: Query optimization
 - [ ] lab 5: Rollback and recovery
