@@ -105,7 +105,7 @@ public class LogFile {
         @param f The log file's name
     */
     public LogFile(File f) throws IOException {
-	this.logFile = f;
+	    this.logFile = f;
         raf = new RandomAccessFile(f, "rw");
         recoveryUndecided = true;
 
@@ -463,10 +463,36 @@ public class LogFile {
     */
     public void rollback(TransactionId tid)
         throws NoSuchElementException, IOException {
+        print();
         synchronized (Database.getBufferPool()) {
             synchronized(this) {
                 preAppend();
-                // some code goes here
+                if (!tidToFirstLogRecord.containsKey(tid.getId())) {
+                    throw new NoSuchElementException("Couldn't find the trasaction");
+                }
+                long abortStartOffset = raf.getFilePointer();
+                long beginOffset = tidToFirstLogRecord.get(tid.getId());
+                //parse begin transaction
+                raf.seek(beginOffset);
+                raf.skipBytes(INT_SIZE+LONG_SIZE+LONG_SIZE); //skip logtype (int), trasanctionid (long), offset (long
+                long currentPointer = raf.getFilePointer();
+                while (currentPointer < abortStartOffset) {
+                    int logType = raf.readInt();
+                    if (logType == UPDATE_RECORD) {
+                        long transactionId = raf.readLong();
+                        Page beforePage = readPageData(raf);
+                        Page afterPage = readPageData(raf);
+                        if (transactionId == tid.getId()) {
+                            Database.getCatalog().getDatabaseFile(beforePage.getId().getTableId()).writePage(beforePage);
+                            Database.getBufferPool().discardPage(beforePage.getId());
+                        }
+                    } else {
+                        //skip trasactionid. before + after images + record-start-offset info
+                        raf.skipBytes(LONG_SIZE+LONG_SIZE);
+
+                    }
+                    currentPointer = raf.getFilePointer();
+                }
             }
         }
     }
@@ -490,21 +516,156 @@ public class LogFile {
         updates of uncommitted transactions are not installed.
     */
     public void recover() throws IOException {
+        //print();
         synchronized (Database.getBufferPool()) {
             synchronized (this) {
                 recoveryUndecided = false;
-                // some code goes here
+                raf.seek(0);
+                // get last checkpoint
+                long checkpointOffset = raf.readLong();
+                if (checkpointOffset != NO_CHECKPOINT_ID) {
+                    raf.seek(checkpointOffset);
+                }
+
+                Set<Long> committedTransactionsAfterCheckpoint = new HashSet<>();
+
+                //find all committed transactions
+                while (true) {
+                    try {
+                        int logRecordType = raf.readInt();
+                        if (logRecordType ==  BEGIN_RECORD ) {
+                            long transactionId = raf.readLong();
+                            long recordOffset = raf.readLong();
+                            this.tidToFirstLogRecord.put(transactionId, recordOffset);
+                        } else if (logRecordType == COMMIT_RECORD) {
+                            long transactionId = raf.readLong();
+                            long recordOffset = raf.readLong();
+                            committedTransactionsAfterCheckpoint.add(transactionId);
+                        } else if (logRecordType == UPDATE_RECORD) {
+                            long recordTxId = raf.readLong();
+                            Page beforePage = readPageData(raf);
+                            Page afterPage = readPageData(raf);
+                            long offset = raf.readLong();
+                        } else if (logRecordType == ABORT_RECORD) {
+                            raf.skipBytes(LONG_SIZE*2);
+                        } else if (logRecordType == CHECKPOINT_RECORD) {
+                            long recordTxId = raf.readLong();
+                            long numActiveTransactions = raf.readInt();
+                            for (int i = 0; i < numActiveTransactions; i++) {
+                                long activeTxnId = raf.readLong();
+                                long activeTxnOffset = raf.readLong();
+                                tidToFirstLogRecord.put(activeTxnId, activeTxnOffset);
+                            }
+                            //skip offset for this record
+                            raf.skipBytes(LONG_SIZE);
+                        } else {
+                            throw new RuntimeException("Not supported in recovery");
+                        }
+
+                    } catch (EOFException e) {
+                        break;
+                    }
+                }
+
+                for (Long transactionId: tidToFirstLogRecord.keySet()) {
+                    long beginOffset = tidToFirstLogRecord.get(transactionId);
+                    if (committedTransactionsAfterCheckpoint.contains(transactionId)) {
+                        handleUpdatesForTransaction(beginOffset, transactionId, true);
+                    } else {
+                        handleUpdatesForTransaction(beginOffset, transactionId, false);
+                    }
+                }
+
+                tidToFirstLogRecord.clear();
+
             }
          }
     }
 
     /** Print out a human readable represenation of the log */
     public void print() throws IOException {
-        // some code goes here
+        raf.seek(0);
+        long checkpointOffset = raf.readLong();
+        System.out.printf("CHECKPOINT OFFSET %d\n", checkpointOffset);
+        while (true) {
+            try {
+                int logRecordType = raf.readInt();
+                long transactionId = raf.readLong();
+                switch (logRecordType) {
+                    case BEGIN_RECORD: {
+                        long recordOffset = raf.readLong();
+                        System.out.printf("BEGIN TXN_ID:%d RECORD_OFFSET %d\n", transactionId, recordOffset);
+                        break;
+                    }
+                    case COMMIT_RECORD: {
+                        long recordOffset = raf.readLong();
+                        System.out.printf("COMMIT TXN_ID:%d RECORD_OFFSET %d\n", transactionId, recordOffset);
+                        break;
+                    }
+                    case UPDATE_RECORD: {
+                        HeapPage beforePage = (HeapPage) readPageData(raf);
+                        HeapPage afterPage = (HeapPage) readPageData(raf);
+                        long offset = raf.readLong();
+                        System.out.printf("UPDATE_RECORD TXN_ID: %d BEFORE_PAGE: %s AFTER_PAGE:%s\n", transactionId, beforePage.toString(), afterPage.toString());
+                        break;
+                    }
+                    case ABORT_RECORD: {
+                        long recordOffset = raf.readLong();
+                        System.out.printf("ABORT TXN_ID:%d RECORD_OFFSET %d\n", transactionId, recordOffset);
+                        break;
+                    }
+
+                    case CHECKPOINT_RECORD: {
+                        StringBuilder activeTxnsDesc = new StringBuilder();
+                        long numActiveTransactions = raf.readInt();
+                        activeTxnsDesc.append("ACTIVE:"+ numActiveTransactions + " ");
+                        for (int i = 0; i < numActiveTransactions; i++) {
+                            long activeTxnId = raf.readLong();
+                            long activeTxnOffset = raf.readLong();
+                            activeTxnsDesc.append("ACTIVE_TXN_ID:"+activeTxnId+ " ACTIVE_YXN_OFFSET: "+activeTxnOffset);
+                        }
+                        long offset = raf.readLong();
+                        System.out.printf("CHECKPOINT TXN_ID:%d ACTIVE_TXNS={%s} OFFSET:%d\n", transactionId, activeTxnsDesc.toString(), offset);
+                    }
+
+                }
+            } catch (EOFException e) {
+                break;
+            }
+
+        }
     }
 
     public  synchronized void force() throws IOException {
         raf.getChannel().force(true);
+    }
+
+
+    private void handleUpdatesForTransaction(long beginOffset, long transactionId, boolean commited) throws IOException {
+        raf.seek(beginOffset);
+        while (true) {
+            try {
+                int logRecordType = raf.readInt();
+                if (logRecordType ==  UPDATE_RECORD ) {
+                    long recordTxId = raf.readLong();
+                    Page beforePage = readPageData(raf);
+                    Page afterPage = readPageData(raf);
+                    long offset = raf.readLong();
+                    if (recordTxId == transactionId) {
+                        //apply after page
+                        if (commited) {
+                            Database.getCatalog().getDatabaseFile(beforePage.getId().getTableId()).writePage(afterPage);
+                        } else {
+                            Database.getCatalog().getDatabaseFile(beforePage.getId().getTableId()).writePage(beforePage);
+                        }
+                    }
+                } else {
+                    raf.skipBytes(LONG_SIZE*2);
+                }
+            } catch (EOFException e){
+                break;
+            }
+        }
     }
 
 }

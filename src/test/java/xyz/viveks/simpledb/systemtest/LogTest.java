@@ -15,8 +15,6 @@ import xyz.viveks.simpledb.operators.Insert;
 /**
  * Test logging, aborts, and recovery.
  */
-
-@Ignore
 public class LogTest extends SimpleDbTestBase {
   File file1;
   File file2;
@@ -191,6 +189,7 @@ public class LogTest extends SimpleDbTestBase {
     // *** Test:
     // insert, abort: data should not be there
     // flush pages directly to heap file to defeat NO-STEAL policy
+
 
     dontInsert(hf1, 4, -1);
 
