@@ -44,18 +44,21 @@ public class Transaction {
 
         if (started) {
             //write commit / abort records
-            if (abort) {
-                Database.getLogFile().logAbort(tid); //does rollback too
-            } else {
-                //write all the dirty pages for this transaction out
-                Database.getBufferPool().flushPages(tid);
-                Database.getLogFile().logCommit(tid);
-            }
-
             try {
                 Database.getBufferPool().transactionComplete(tid, !abort); // release locks
             } catch (IOException | DbException e) {
                 e.printStackTrace();
+            }
+
+            if (abort) {
+                Database.getLogFile().logAbort(tid);
+                //does rollback too
+            } else {
+                //write all the dirty pages for this transaction out
+                // Removing this since Bufferpool.flushPages already handles writing dirty pages to disk that
+                // are associated with the trasaction
+//                Database.getBufferPool().flushPages(tid);
+                Database.getLogFile().logCommit(tid);
             }
 
             //setting this here means we could possibly write multiple abort records -- OK?

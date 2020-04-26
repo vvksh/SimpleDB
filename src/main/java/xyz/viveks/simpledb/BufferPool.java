@@ -150,17 +150,22 @@ public class BufferPool {
     }
     if (commit) {
       for (PageId pageId: transactionToPagesMap.get(tid)) {
-        //1. If found in bufferpool and dirty, flush all dirty pages to disk, note that if not dirty, page could
-        // have been evicted
+//        1. If found in bufferpool and dirty, flush all dirty pages to disk, note that if not dirty, page could
+//         have been evicted
         if (pages.containsKey(pageId) && pages.get(pageId).isDirty() != null) {
           flushPage(pageId);
+          pages.get(pageId).markDirty(false, null);
+          //update page before image, so that other transactions making changes use updated page's data as before-image
+          pages.get(pageId).setBeforeImage();
+          Page beforeImage = pages.get(pageId).getBeforeImage();
+          System.out.println(beforeImage.getId());
         }
         // 2. release all locks
         lockManager.releaseAllLocks(tid, pageId);
       }
     } else {
       for (PageId pageId: transactionToPagesMap.get(tid)) {
-        //1. If found in bufferpool and dirty, restore from disk, ote that if not dirty, page could
+        //1. If found in bufferpool and dirty, restore from disk, note that if not dirty, page could
         // have been evicted
         if (pages.containsKey(pageId) && pages.get(pageId).isDirty() != null) {
           Page pageFromDisk = Database.getCatalog().getDatabaseFile(pageId.getTableId()).readPage(pageId);
@@ -247,14 +252,30 @@ public class BufferPool {
    * @param pid an ID indicating the page to flush
    */
   private synchronized void flushPage(PageId pid) throws IOException {
+    Page pageToFlush = pages.get(pid);
+    TransactionId dirtier = pageToFlush.isDirty();
+    if (dirtier != null){
+      Database.getLogFile().logWrite(dirtier, pageToFlush.getBeforeImage(), pageToFlush);
+      Database.getLogFile().force();
+    }
+
     DbFile dbFile = Database.getCatalog().getDatabaseFile(pid.getTableId());
     dbFile.writePage(pages.get(pid));
   }
 
   /** Write all pages of the specified transaction to disk. */
   public synchronized void flushPages(TransactionId tid) throws IOException {
-    // some code goes here
-    // not necessary for lab1|lab2
+    for (PageId pageId: transactionToPagesMap.get(tid)) {
+      //1. If found in bufferpool and dirty, flush all dirty pages to disk, note that if not dirty, page could
+      // have been evicted
+      if (pages.containsKey(pageId) && pages.get(pageId).isDirty() != null) {
+        flushPage(pageId);
+        //update page before image, so that other transactions making changes use updated page's data as before-image
+        pages.get(pageId).setBeforeImage();
+        pages.get(pageId).markDirty(false, null);
+      }
+    }
+
   }
 
   /**

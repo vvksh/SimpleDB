@@ -306,9 +306,8 @@ public class HeapPage implements Page {
   }
 
   /** Returns true if associated slot on this page is filled. */
-  public boolean isSlotUsed(int index) {
-    BitSet bitset = BitSet.valueOf(header);
-    return bitset.get(index);
+  public boolean isSlotUsed(int i) {
+    return  (this.header[i / 8] & (1 << (i % 8))) != 0;
   }
 
   public int getFirstEmptySlot() {
@@ -321,11 +320,13 @@ public class HeapPage implements Page {
   }
 
   /** Abstraction to fill or clear a slot on this page. */
-  private void markSlotUsed(int i, boolean value) {
-    BitSet bitset = BitSet.valueOf(header);
-    bitset.set(i, value);
-    header = bitset.toByteArray();
-    header = bitset.toByteArray();
+  private void markSlotUsed(int i, boolean used) {
+    if (used) {
+      header[i/8] |= (1 << (i % 8));
+    }  else {
+      header[i / 8] &= ~(1 << (i % 8));
+    }
+
   }
 
   /**
@@ -339,5 +340,20 @@ public class HeapPage implements Page {
             .filter(tuple -> !Objects.isNull(tuple))
             .collect(Collectors.toList())
             .iterator();
+  }
+
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("HeapPage{" +
+            "pid=" + pid +
+            ", tuples =");
+    for (Tuple t: tuples) {
+      if (t != null) {
+        sb.append(t.toString()+",");
+      }
+    }
+    sb.append("}");
+    return sb.toString();
   }
 }
