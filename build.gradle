@@ -1,14 +1,27 @@
 //Uncomment lines related to errorprone to enable it, choosing to disable for now
 
-//plugins {
-//    // we assume you are already using the Java plugin
-//    id "net.ltgt.errorprone" version "0.6"
-//}
 
+buildscript {
+    repositories {
+        jcenter() // this applies only to the Gradle 'Shadow' plugin
+    }
+    dependencies {
+        classpath 'com.github.jengelman.gradle.plugins:shadow:5.2.0'
+    }
+}
+
+plugins {
+    // we assume you are already using the Java plugin
+    id 'com.github.johnrengelman.shadow' version '5.2.0'
+}
 
 apply plugin: 'java'
+apply plugin: 'application'
 group 'xyz.vivek'
 version '1.0-SNAPSHOT'
+
+apply plugin: 'com.github.johnrengelman.shadow'
+mainClassName = 'xyz.viveks.simpledb.SimpleDb'
 
 sourceCompatibility = 1.8
 

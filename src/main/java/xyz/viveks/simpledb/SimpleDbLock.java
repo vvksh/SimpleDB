@@ -41,22 +41,22 @@ public class SimpleDbLock {
       while (isWriteLocked()) {
         // if transaction already holds write lock, grant read lock
         if (transactionHasWriteAccess(tid)) {
-          System.out.printf(
-              "Transaction %s already has write lock, granting read lock\n", tid.toString());
+//          System.out.printf(
+//              "Transaction %s already has write lock, granting read lock\n", tid.toString());
           setReadLock(tid);
           return true;
         }
         //  if someone else holds, wait till timeout, or someone notifies
-        System.out.printf("Page %s already has write lock, waiting \n", pageId.toString());
+//        System.out.printf("Page %s already has write lock, waiting \n", pageId.toString());
         acquiredLocks.wait(timeoutInMillis);
         if (isWriteLocked()) {
-          System.out.printf(
-              "Page %s already still has write lock, timing out\n", pageId.toString());
+//          System.out.printf(
+//              "Page %s already still has write lock, timing out\n", pageId.toString());
           return false;
         }
       }
 
-      System.out.printf("Granting read lock to Transaction %s\n", tid.toString());
+//      System.out.printf("Granting read lock to Transaction %s\n", tid.toString());
       setReadLock(tid);
       return true;
     }
@@ -67,22 +67,22 @@ public class SimpleDbLock {
       while (locked) {
         // if only this transaction has any lock on this page, give it write lock
         if (acquiredLocks.keySet().size() == 1 && acquiredLocks.containsKey(tid)) {
-          System.out.printf(
-              "transaction: %s already has sole lock on this page, granting write lock\n",
-              tid.toString());
+//          System.out.printf(
+//              "transaction: %s already has sole lock on this page, granting write lock\n",
+//              tid.toString());
           setWriteLock(tid);
           return true;
         }
         acquiredLocks.wait(timeoutInMillis);
         if (locked) {
-          System.out.printf("Page %s already locked, timing out\n", pageId.toString());
+//          System.out.printf("Page %s already locked, timing out\n", pageId.toString());
           return false;
         }
       }
 
       // check if timed out
 
-      System.out.printf("Granting write lock to Transaction %s\n", tid.toString());
+//      System.out.printf("Granting write lock to Transaction %s\n", tid.toString());
       setWriteLock(tid);
       return true;
     }

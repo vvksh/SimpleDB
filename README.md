@@ -47,5 +47,9 @@ This project is implementation of a simple relational DB. The skeleton files and
 - [X] lab 1: SimpleDB setup
 - [X] lab 2: SimpleDB operators
 - [X] lab 3: SimpleDB transactions 
-- [ ] lab 4: Query optimization
-- [ ] lab 5: Rollback and recovery
+- [ ] lab 4: Query optimization (Not interested)
+- [X] lab 5: Rollback and recovery
+
+## Using the database
+
+Read [User Guide](USERGUIDE.md)
